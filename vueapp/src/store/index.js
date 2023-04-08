@@ -13,7 +13,8 @@ const store = createStore({
         accounts: [],
         transactions: [],
         updateObject: null,
-        activeAccount: null
+        activeAccount: null,
+        updateId: null
     },
 
     getters: {
@@ -22,6 +23,9 @@ const store = createStore({
         },
         getAccounts(state) {
             return state.accounts
+        },
+        getAccount: (state) => (id) => {
+            return state.accounts.filter(t => t.id == id)[0]
         },
         getTransactionsById: (state) => (id) => {
             return state.transactions.filter(t => t.id == id)[0]
@@ -34,6 +38,10 @@ const store = createStore({
         },
         getActiveAccount(state) {
             return state.activeAccount
+        },
+        getUpdateId(state) {
+            console.log(state.updateId)
+            return state.updateId
         }
     },
 
@@ -44,11 +52,14 @@ const store = createStore({
         addAccount(state, payload) {
             payload.transactions = [];
             state.accounts.push(payload);
+            console.log(payload)
             state.transactions.push(payload);
+            console.log(payload)
         },
         updateAccount(state, payload) {
             const updateIndex = state.accounts.indexOf(state.accounts.filter(account => account.id == payload.accountId)[0])
             state.accounts[updateIndex].name = payload.Name
+            state.accounts[updateIndex].profilePicture = payload.profilePicture
         },
         removeAccount(state, payload) {
             const removeIndex = state.accounts.indexOf(state.accounts.filter(account => account.id == payload)[0])
@@ -83,6 +94,10 @@ const store = createStore({
         },
         setActiveAccount(state, payload) {
             state.activeAccount = payload
+        },
+        setUpdateId(state, payload) {
+            state.updateId = payload
+            console.log(state.updateId)
         }
     },
 
@@ -103,7 +118,9 @@ const store = createStore({
             })
                 .then(() => context.commit('removeAccount', payload))
         },
-        addAccount(context, payload) {
+        addAccount(context, accountDto) {
+            console.log('VUEX: ', accountDto)
+            console.log('VUEX: ', accountDto.formData)
             fetch(`${BASE_URL}/api/Accounts`, {
                 method: "POST", // *GET, POST, PUT, DELETE, etc.
                 mode: "cors", // no-cors, *cors, same-origin
@@ -115,10 +132,22 @@ const store = createStore({
                 },
                 redirect: "follow", // manual, *follow, error
                 referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-                body: JSON.stringify(payload)
+                body: JSON.stringify(accountDto)
             })
-            .then(response => response.json()
-            .then(account => context.commit('addAccount', account)))
+            .then(response => response.json())
+                .then(account => {
+                    console.log(account)
+                    fetch(`${BASE_URL}/api/Accounts/uploadImage/${account.id}`, {
+                        method: "POST",
+                        body: accountDto.formData
+                    })
+                        .then(resp => resp.json())
+                        .then(json => {
+                            console.log(json)
+                            account.profilePicture = json.imageName
+                            context.commit('addAccount', account)
+                        })
+                })
         },
         updateAccount(context, payload) {
             fetch(`${BASE_URL}/api/Accounts/${payload.accountId}`, {
@@ -134,7 +163,22 @@ const store = createStore({
                 referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
                 body: JSON.stringify(payload)
             })
-                .then(() => context.commit('updateAccount',payload))
+                .then(() => {
+                    fetch(`${BASE_URL}/api/Accounts/uploadImage/${payload.accountId}`, {
+                        method: "POST",
+                        body: payload.formData
+                    })
+                        .then(resp => resp.json())
+                        .then(json => {
+                            payload.profilePicture = json.imageName
+                            console.log(payload)
+                            context.commit('updateAccount', payload)
+
+
+                            //context.commit('updateAccount', payload)
+
+                        })
+                })
         },
         updateAccounts(context) {
             fetch(`${BASE_URL}/api/Accounts`)
@@ -223,6 +267,9 @@ const store = createStore({
                     }
                 })
 
+        },
+        setUpdateId(context, payload) {
+            context.commit('setUpdateId', payload)
         }
     }
 })

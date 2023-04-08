@@ -75,6 +75,8 @@ app.UseCors("MyAllowSpecificOrigins");
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();
+
 app.UseAuthorization();
 
 app.MapControllers();

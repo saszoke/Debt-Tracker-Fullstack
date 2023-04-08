@@ -34,7 +34,7 @@
                                       @updateRole="this.$emit('updateRole')"></AccountCardComponent>
             </v-window-item>
         </v-window>
-        <AccountRemovalComponent :show="showConfirm" @close="showConfirm = !showConfirm" @agree="greenlight = true"></AccountRemovalComponent>
+        <AccountRemovalComponent :toDelete="activeTab" :show="showConfirm" @close="showConfirm = !showConfirm" @agree="greenlight = true"></AccountRemovalComponent>
 </template>
 
 <script>
@@ -82,12 +82,6 @@
 
             }
         },
-        //created() {
-        //    this.updateAccounts()
-        //        //.then(() => {
-        //        //    this.accounts = this.getAccounts;
-        //        //})
-        //},
 
         beforeMount() {
             this.updateAccounts();

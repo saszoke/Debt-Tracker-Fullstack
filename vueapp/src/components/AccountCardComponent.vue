@@ -5,12 +5,12 @@
         <v-img src="https://www.solidbackgrounds.com/images/2560x1440/2560x1440-light-coral-solid-color-background.jpg"
                height="200px"
                cover>
-            <v-avatar image="https://www.w3schools.com/howto/img_avatar2.png" size="160" class="mt-5"></v-avatar>
-            <v-btn icon="mdi-pencil" size="x-small" style="position: absolute" class="my-5 mx-8" @click="this.$emit('updateRole')"></v-btn>
+            <v-avatar :image="'https://localhost:7092/images/' + account.profilePicture" size="160" class="mt-5"></v-avatar>
+            <v-btn icon="mdi-pencil" size="x-small" style="position: absolute" class="my-5 mx-8" @click="edit"></v-btn>
         </v-img>
 
         <v-card-title>
-            Debt: {{ getBalance(account.id) }} Ft
+            Debt: {{ formatAmount(getBalance(account.id)) }}
         </v-card-title>
 
         <v-card-subtitle class="text-uppercase">
@@ -63,12 +63,34 @@
             ]),
             accountDetails() {
                 return this.account
-            }
+            },
+            
         },
         methods: {
             ...mapActions([
-                'updateTransactions'
-            ])
+                'updateTransactions',
+                'setUpdateId'
+            ]),
+            formatAmount(amount) {
+                if (amount >= 10000 && amount <= 99999) {
+                    return amount.toString().substr(0, 2) + " " + amount.toString().substring(2) + ' Ft'
+                } else if (amount >= 100000 && amount <= 999999) {
+                    return amount.toString().substr(0, 3) + " " + amount.toString().substring(3) + ' Ft'
+                } else if (amount >= 1000000 && amount <= 9999999) {
+                    return amount.toString().substr(0, 1) + " " + amount.toString().substr(1, 3) + " " + amount.toString().substring(4) + ' Ft'
+                } else if (amount >= 10000000 && amount <= 99999999) {
+                    return amount.toString().substr(0, 2) + " " + amount.toString().substr(2, 3) + " " + amount.toString().substring(5) + ' Ft'
+                } else if (amount >= 100000000 && amount <= 999999999) {
+                    return amount.toString().substr(0, 3) + " " + amount.toString().substr(3, 3) + " " + amount.toString().substring(6) + ' Ft'
+                } else if (amount >= 1000000000 && amount <= 2147483647) {
+                    return amount.toString().substr(0, 1) + " " + amount.toString().substr(1, 3) + " " + amount.toString().substr(3, 3) + " " + amount.toString().substring(7) + ' Ft'
+                } else return amount + ' Ft'
+            },
+            edit() {
+                console.log(this.account.id)
+                this.setUpdateId(this.account.id)
+                this.$emit('updateRole')
+            }
         },
 
         created() {
