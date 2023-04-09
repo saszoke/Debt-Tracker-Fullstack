@@ -1,5 +1,5 @@
 <template>
-    <LoginComponent msg="Bank on the Web" @token="storeToken"></LoginComponent>
+    <LoginComponent></LoginComponent>
 </template>
 
 <script>

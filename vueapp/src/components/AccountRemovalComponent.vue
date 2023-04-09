@@ -45,6 +45,7 @@
 
             agree() {
                 this.removeAccount(this.toRemove)
+                this.$emit('agreed')
                 this.$emit('close')
             }
         },

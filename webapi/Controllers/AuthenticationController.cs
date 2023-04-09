@@ -30,7 +30,8 @@ namespace webapi.Controllers
         {
             AuthResult authResult = new AuthResult();
             authResult.Success = false;
-            
+            authResult.Errors = new List<string>();
+
             if (!ModelState.IsValid)
             {
                 authResult.Errors.Add("Invalid payload.");
@@ -54,7 +55,8 @@ namespace webapi.Controllers
 
             // generate Token
             var token = JwtGenerator.GenerateJwtToken(existingUser, _configuration);
-            
+
+            authResult.Username = existingUser.UserName;
             authResult.Success = true;
             authResult.Token = token;
             return Ok(authResult);
@@ -66,6 +68,7 @@ namespace webapi.Controllers
         {
             AuthResult authResult = new AuthResult();
             authResult.Success = false;
+            authResult.Errors = new List<string>();
 
             if (!ModelState.IsValid)
             {
@@ -90,6 +93,7 @@ namespace webapi.Controllers
             if (isCreated.Succeeded)
             {
                 var token = JwtGenerator.GenerateJwtToken(newUser, _configuration);
+                authResult.Username = newUser.UserName;
                 authResult.Success = true;
                 authResult.Token = token;
                 return Ok(authResult);

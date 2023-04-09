@@ -1,6 +1,6 @@
 
 <template>
-    <v-card class="mx-auto"
+    <v-card class="mx-auto rounded-b-xl"
             max-width="344">
         <v-img src="https://www.solidbackgrounds.com/images/2560x1440/2560x1440-light-coral-solid-color-background.jpg"
                height="200px"

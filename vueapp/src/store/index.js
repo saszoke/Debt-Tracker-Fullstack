@@ -7,7 +7,6 @@ const store = createStore({
     state: {
         user: {
             Username: null,
-            Email: null,
             Token: null
         },
         accounts: [],
@@ -48,6 +47,7 @@ const store = createStore({
     mutations: {
         setUser(state, payload) {
             state.user = payload
+            console.log('All good.', state.user)
         },
         addAccount(state, payload) {
             payload.transactions = [];
@@ -102,26 +102,8 @@ const store = createStore({
     },
 
     actions: {
-        setUser(context, payload) {
-            context.commit('setUser', payload)
-        },
-        removeAccount(context, payload) {
-            fetch(`${BASE_URL}/api/Accounts/${payload}`, {
-                method: "DELETE",
-                mode: "cors",
-                cache: "no-cache",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                redirect: "follow",
-                referrerPolicy: "no-referrer",
-            })
-                .then(() => context.commit('removeAccount', payload))
-        },
-        addAccount(context, accountDto) {
-            console.log('VUEX: ', accountDto)
-            console.log('VUEX: ', accountDto.formData)
-            fetch(`${BASE_URL}/api/Accounts`, {
+        login(context, payload) {
+            fetch(`${BASE_URL}/api/Authentication/Login`, {
                 method: "POST", // *GET, POST, PUT, DELETE, etc.
                 mode: "cors", // no-cors, *cors, same-origin
                 cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
@@ -132,24 +114,68 @@ const store = createStore({
                 },
                 redirect: "follow", // manual, *follow, error
                 referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+                body: JSON.stringify(payload)
+            })
+                .then(r => r.json())
+                .then(json => {
+                    console.log(json)
+                    if (json.success) {
+                        context.commit('setUser', { Username: json.username, Token: json.token })
+                    } else {
+                        console.log('Something went wrong', json)
+                    }
+                })
+        },
+        logout(context) {
+            context.commit('setUser', { Username: null, Token: null })
+        },
+        removeAccount({ state, commit }, payload) {
+            fetch(`${BASE_URL}/api/Accounts/${payload}`, {
+                method: "DELETE",
+                mode: "cors",
+                cache: "no-cache",
+                headers: {
+                    "Content-Type": "application/json",
+                    'Authorization': 'Bearer ' + state.user.Token
+                },
+                redirect: "follow",
+                referrerPolicy: "no-referrer",
+            })
+                .then(() => {
+                    commit('removeAccount', payload)
+                    commit('setActiveAccount', null)
+                })
+                
+        },
+        addAccount({ state, commit }, accountDto) {
+            fetch(`${BASE_URL}/api/Accounts`, {
+                method: "POST", // *GET, POST, PUT, DELETE, etc.
+                mode: "cors", // no-cors, *cors, same-origin
+                cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+                //credentials: "same-origin", // include, *same-origin, omit
+                headers: {
+                    "Content-Type": "application/json",
+                    'Authorization': 'Bearer ' + state.user.Token
+                    // 'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                redirect: "follow", // manual, *follow, error
+                referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
                 body: JSON.stringify(accountDto)
             })
             .then(response => response.json())
                 .then(account => {
-                    console.log(account)
                     fetch(`${BASE_URL}/api/Accounts/uploadImage/${account.id}`, {
                         method: "POST",
                         body: accountDto.formData
                     })
                         .then(resp => resp.json())
                         .then(json => {
-                            console.log(json)
                             account.profilePicture = json.imageName
-                            context.commit('addAccount', account)
+                            commit('addAccount', account)
                         })
                 })
         },
-        updateAccount(context, payload) {
+        updateAccount({ state, commit }, payload) {
             fetch(`${BASE_URL}/api/Accounts/${payload.accountId}`, {
                 method: "PUT", // *GET, POST, PUT, DELETE, etc.
                 mode: "cors", // no-cors, *cors, same-origin
@@ -157,6 +183,7 @@ const store = createStore({
                 //credentials: "same-origin", // include, *same-origin, omit
                 headers: {
                     "Content-Type": "application/json",
+                    'Authorization': 'Bearer ' + state.user.Token
                     // 'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 redirect: "follow", // manual, *follow, error
@@ -171,44 +198,48 @@ const store = createStore({
                         .then(resp => resp.json())
                         .then(json => {
                             payload.profilePicture = json.imageName
-                            console.log(payload)
-                            context.commit('updateAccount', payload)
-
-
-                            //context.commit('updateAccount', payload)
-
+                            commit('updateAccount', payload)
                         })
                 })
         },
-        updateAccounts(context) {
-            fetch(`${BASE_URL}/api/Accounts`)
+        updateAccounts({ state, commit }) {
+            fetch(`${BASE_URL}/api/Accounts`, {
+                headers: {
+                    'Authorization': 'Bearer ' + state.user.Token
+                }
+            })
                 .then(response => {
                     return response.json()
                 })
                 .then(json => {
                     Array.from(json).forEach(account => {
-                        context.commit('addAccount', account);
+                        commit('addAccount', account);
                     })
                 })
         },
-        updateTransactions(context, payload) {
-            fetch(`${BASE_URL}/api/Transactions/Accounts/${payload.accountId}`)
+        updateTransactions({ state, commit }, payload) {
+            fetch(`${BASE_URL}/api/Transactions/Accounts/${payload.accountId}`, {
+                headers: {
+                    'Authorization': 'Bearer ' + state.user.Token
+                }
+            })
                 .then(response => response.json())
                 .then(json => Array.from(json).forEach(transaction => {
-                    context.commit('addTransaction', transaction)
+                    commit('addTransaction', transaction)
                 }));
             fetch(`${BASE_URL}/api/Accounts/${payload.accountId}/Balance`)
                 .then(response => response.json())
-                .then(json => context.commit('setAccountBalance', json))
+                .then(json => commit('setAccountBalance', json))
 
         },
-        addTransaction(context, payload) {
+        addTransaction({ state, commit }, payload) {
             fetch(`${BASE_URL}/api/Transactions`, {
                 method: "POST",
                 mode: "cors",
                 cache: "no-cache",
                 headers: {
                     "Content-Type": "application/json",
+                    'Authorization': 'Bearer ' + state.user.Token
                 },
                 redirect: "follow",
                 referrerPolicy: "no-referrer",
@@ -216,21 +247,26 @@ const store = createStore({
             })
                 .then(response => response.json())
                 .then(json => {
-                    context.commit('addTransaction', json)
+                    commit('addTransaction', json)
                 })
                 .then(() => {
-                    fetch(`${BASE_URL}/api/Accounts/${payload.accountId}/Balance`)
+                    fetch(`${BASE_URL}/api/Accounts/${payload.accountId}/Balance`, {
+                        headers: {
+                            'Authorization': 'Bearer ' + state.user.Token
+                        }
+                    })
                         .then(response => response.json())
-                        .then(json => context.commit('setAccountBalance', json))
+                        .then(json => commit('setAccountBalance', json))
                 })
         },
-        updateTransaction(context, payload) {
+        updateTransaction({ state, commit }, payload) {
             fetch(`${BASE_URL}/api/Transactions/${payload.TransactionId}`, {
                 method: 'PUT',
                 mode: 'cors',
                 cache: 'no-cache',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + state.user.Token
                 },
                 redirect: 'follow',
                 referrerPolicy: 'no-referrer',
@@ -238,21 +274,26 @@ const store = createStore({
             })
                 .then(resp => resp.json())
                 .then(json => {
-                    context.commit('updateTransaction', json)
+                    commit('updateTransaction', json)
                 })
                 .then(() => {
-                    fetch(`${BASE_URL}/api/Accounts/${payload.accountId}/Balance`)
+                    fetch(`${BASE_URL}/api/Accounts/${payload.accountId}/Balance`, {
+                        headers: {
+                            'Authorization': 'Bearer ' + state.user.Token
+                        }
+                    })
                         .then(response => response.json())
-                        .then(json => context.commit('setAccountBalance', json))
+                        .then(json => commit('setAccountBalance', json))
                 })
         },
-        removeTransaction(context, payload) {
+        removeTransaction({ state, commit }, payload) {
             fetch(`${BASE_URL}/api/Transactions/${payload.id}`, {
                 method: 'DELETE',
                 mode: 'cors',
                 cache: 'no-cache',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + state.user.Token
                 },
                 redirect: 'follow',
                 referrerPolicy: 'no-referrer',
@@ -260,10 +301,14 @@ const store = createStore({
             })
                 .then(resp => {
                     if (resp.ok) {
-                        context.commit('removeTransaction', payload)
-                        fetch(`${BASE_URL}/api/Accounts/${payload.accountId}/Balance`)
+                        commit('removeTransaction', payload)
+                        fetch(`${BASE_URL}/api/Accounts/${payload.accountId}/Balance`, {
+                            headers: {
+                                'Authorization': 'Bearer ' + state.user.Token
+                            }
+                        })
                             .then(response => response.json())
-                            .then(json => context.commit('setAccountBalance', json))
+                            .then(json => commit('setAccountBalance', json))
                     }
                 })
 

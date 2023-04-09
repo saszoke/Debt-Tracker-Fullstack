@@ -1,5 +1,5 @@
 <template>
-        <div class="text-center" style="background-color: #ffccd4">
+        <div class="text-center rounded-t elevation-2" style="background-color: #ffccd4">
             <v-btn :disabled="activeTab == null"
                    variant="text"
                    @click="deleteAccount">
@@ -22,7 +22,7 @@
                 {{ account.name }}
             </v-tab>
         </v-tabs>
-        <v-window v-model="tab">
+        <v-window v-model="tab" class="rounded-b-xl">
             <v-window-item v-for="account in accounts"
                            :key="account"
                            :value="account"
@@ -34,7 +34,7 @@
                                       @updateRole="this.$emit('updateRole')"></AccountCardComponent>
             </v-window-item>
         </v-window>
-        <AccountRemovalComponent :toDelete="activeTab" :show="showConfirm" @close="showConfirm = !showConfirm" @agree="greenlight = true"></AccountRemovalComponent>
+        <AccountRemovalComponent :toDelete="activeTab" :show="showConfirm" @close="showConfirm = !showConfirm" @agreed="activeTab = null"></AccountRemovalComponent>
 </template>
 
 <script>
@@ -49,7 +49,6 @@
         },
         data: () => ({
             showConfirm: false,
-            greenlight: false,
             accounts: [],
             tab: null,
             activeTab: null
@@ -87,16 +86,6 @@
             this.updateAccounts();
             this.accounts = this.getAccounts;
         },
-        watch: {
-            greenlight() {
-                if (this.greenlight) {
-                    console.log('Remove account: ', this.activeTab)
-                    this.removeAccount(this.activeTab)
-                } else return
-                this.greenlight = false
-                this.showConfirm = false
-            }
-        }
 
   }
 </script>

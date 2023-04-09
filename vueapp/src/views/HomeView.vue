@@ -1,27 +1,5 @@
 <template>
-    <!--<v-card>
-        <v-layout>
-            <v-navigation-drawer class="bg-deep-purple"
-                                 theme="dark"
-                                 permanent>
-                <v-list color="transparent">
-                    <v-list-item prepend-icon="mdi-view-dashboard" title="Dashboard"></v-list-item>
-                    <v-list-item prepend-icon="mdi-account-box" title="Account"></v-list-item>
-                    <v-list-item prepend-icon="mdi-gavel" title="Admin"></v-list-item>
-                </v-list>
-
-                <template v-slot:append>
-                    <div class="pa-2">
-                        <v-btn block>
-                            Logout
-                        </v-btn>
-                    </div>
-                </template>
-            </v-navigation-drawer>
-            <v-main style="height: 400px"></v-main>
-        </v-layout>
-    </v-card>-->
-
+    <NavigationComponent></NavigationComponent>
     <AccountsComponent 
                        @newAccount="toggleAccountCreationModal" 
                        @newTransaction="toggleTransactionCreationModal"
@@ -43,12 +21,19 @@
     import AccountsComponent from '../components/AccountsComponent';
     import AccountCreationComponent from '../components/AccountCreationComponent.vue';
     import TransactionCreationComponent from '../components/TransactionCreationComponent.vue';
+    import NavigationComponent from '../components/NavigationComponent.vue';
     import { mapGetters, mapActions } from 'vuex';
     export default {
+        beforeRouteEnter(to, from) {
+            console.log(this)
+        //    return 'false'
+        },
+
         components: {
             AccountsComponent,
             AccountCreationComponent,
             TransactionCreationComponent,
+            NavigationComponent
         },
         data() {
             return {
@@ -61,6 +46,7 @@
         },
         props: {
             ...mapGetters([
+                'getUser',
                 'getAccounts'
             ])
         },
